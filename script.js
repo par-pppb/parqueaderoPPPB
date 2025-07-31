@@ -303,7 +303,7 @@ function login() {
 
   // Si no es ni admin ni cliente válido
   loginErrorDiv.innerText =
-    "Credenciales incorrectas. Para admin: usuario admin y clave 1234. Para clientes: usa tu placa como usuario y tu contraseña.";
+    "Credenciales incorrectas. Usuario o contraseña incorrecto. Valide con el administrador del sitio.";
 }
 
 function mostrarAdmin() {
@@ -826,7 +826,7 @@ async function generarComprobanteMensualidadPDF(buttonElement) {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("COMPROBANTE DE PAGO", pageWidth / 2, currentY, null, null, "center");
+    doc.text("RECIBO DE ARRENDAMIENTO - COMPROBANTE DE PAGO", pageWidth / 2, currentY, null, null, "center");
     currentY += 10;
 
     doc.setFont("helvetica", "normal");
