@@ -5,334 +5,256 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parqueadero PPPB</title>
     <link rel="stylesheet" href="styles.css">
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <section id="login-section" class="login-section">
+        <h1>Parqueadero PPPB</h1>
+
+        <section id="login-section" class="auth-card">
             <h2>Iniciar Sesión</h2>
             <div class="input-group">
-                <label for="username">Usuario:</label>
-                <input type="text" id="username" placeholder="Usuario o Placa" required>
+                <label for="username">Usuario / Placa:</label>
+                <input type="text" id="username" placeholder="Usuario">
             </div>
             <div class="input-group">
                 <label for="password">Contraseña:</label>
-                <input type="password" id="password" placeholder="Contraseña" required>
+                <input type="password" id="password" placeholder="Contraseña">
             </div>
-            <button id="btnEntrar">Entrar</button>
-            <div id="login-error" class="error-message"></div>
+            <button id="login-btn">Ingresar</button>
+            <p id="login-message" class="error-message"></p>
         </section>
 
-        <section id="app" style="display: none;">
-            <header>
-                <h1>Parqueadero PPPB</h1>
-                <button id="btnCerrarSesion" style="display: none;">Cerrar Sesión</button>
-            </header>
+        <section id="admin-panel" class="hidden">
+            <nav class="tabs">
+                <button class="tab-button active" data-tab="parqueo-horas">Cálculo por Horas</button>
+                <button class="tab-button" data-tab="mensualidades">Mensualidades</button>
+                <button class="tab-button" data-tab="mi-perfil-admin">Mi Perfil (Admin)</button>
+                <button id="logout-btn-admin" class="logout-button">Salir</button>
+            </nav>
 
-            <div id="admin-panel" style="display: none;">
-                <nav class="main-nav">
-                    <ul>
-                        <li id="nav-calculo-horas"><a href="#" onclick="showTab('hora')">Cálculo por Horas</a></li>
-                        <li id="nav-mensualidades"><a href="#" onclick="showTab('mensualidades')">Mensualidades</a></li>
-                        <li id="nav-mi-perfil"><a href="#" onclick="showTab('perfil-admin')">Mi Perfil (Admin)</a></li>
-                    </ul>
-                </nav>
-
-                <main class="tab-content-container">
-                    <div id="hora" class="tab-content">
-                        <h2>Gestión de Parqueo por Horas</h2>
-                        <div class="card">
-                            <h3>Entrada/Salida de Vehículo</h3>
-                            <div class="input-group">
-                                <label for="placaProceso">Placa:</label>
-                                <input type="text" id="placaProceso" placeholder="Ingrese la placa" maxlength="7" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="tipoVehiculoEntrada">Tipo de Vehículo:</label>
-                                <select id="tipoVehiculoEntrada">
-                                    <option value="automovil">Automóvil/Camioneta</option>
-                                    <option value="moto">Moto</option>
-                                    <option value="camion">Camión</option>
-                                </select>
-                            </div>
-                            <button id="btnProcesarPlaca">Procesar Placa</button>
-                        </div>
-
-                        <div id="dynamicParkingInfo" class="card" style="display: none;">
-                            <h3>Información de Salida</h3>
-                            <p><strong>Placa:</strong> <span id="displayPlacaCalculo"></span></p>
-                            <p><strong>Entrada:</strong> <span id="displayFechaHoraEntradaDetallada"></span></p>
-                            <p><strong>Salida:</strong> <span id="displayFechaHoraSalidaDetallada"></span> (Fecha y Hora Actual)</p>
-                            <p><strong>Duración:</strong> <span id="displayTiempoTotalDetallado"></span></p>
-                            <p><strong>Tipo de Tarifa Aplicada:</strong> <span id="displayTarifaAplicada"></span></p>
-                            <p class="total-cost"><strong>Costo Total:</strong> <span id="displayCostoTotalCalculo">$0</span></p>
-                            <button id="btnRegistrarSalidaAccion" style="display: none;">Registrar Salida y Calcular</button>
-                            <button id="btnImprimirComprobante" style="display: none;" class="print-btn">Imprimir Comprobante</button>
-                        </div>
-
-                        <div class="card">
-                            <h3>Vehículos Parqueados Actualmente</h3>
-                            <p>Automóviles: <span id="countCars">0</span></p>
-                            <p>Motos: <span id="countMotos">0</span></p>
-                            <p>Camiones: <span id="countTrucks">0</span></p>
-                        </div>
-
-                        <h3>Historial de Parqueo</h3>
-                        <div class="table-container">
-                            <table id="tablaHistorialAutomated" class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Placa</th>
-                                        <th>Tipo</th>
-                                        <th>Entrada</th>
-                                        <th>Salida</th>
-                                        <th>Duración</th>
-                                        <th>Costo</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    </tbody>
-                            </table>
-                        </div>
+            <div class="tab-content active" id="parqueo-horas">
+                <h3>Gestión de Parqueo por Horas</h3>
+                <div class="form-section">
+                    <h4>Registrar Entrada</h4>
+                    <div class="input-group">
+                        <label for="entrada-placa">Placa:</label>
+                        <input type="text" id="entrada-placa" placeholder="ABC-123">
                     </div>
-
-                    <div id="mensualidades" class="tab-content" style="display: none;">
-                        <h2>Gestión de Mensualidades</h2>
-                        <div class="card">
-                            <h3>Registrar Nueva Mensualidad</h3>
-                            <div class="input-group">
-                                <label for="cliente">Nombre del Cliente:</label>
-                                <input type="text" id="cliente" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="placaMensualidad">Placa del Vehículo:</label>
-                                <input type="text" id="placaMensualidad" maxlength="7" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="tipoMensualidad">Tipo de Vehículo:</label>
-                                <select id="tipoMensualidad">
-                                    <option value="automovil">Automóvil/Camioneta</option>
-                                    <option value="moto">Moto</option>
-                                    <option value="camion">Camión</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label for="valorMensualidad">Valor:</label>
-                                <input type="number" id="valorMensualidad" min="0" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="fechaPago">Fecha de Pago:</label>
-                                <input type="date" id="fechaPago" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="fechaInicio">Vigencia Desde:</label>
-                                <input type="date" id="fechaInicio" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="fechaFin">Vigencia Hasta:</label>
-                                <input type="date" id="fechaFin" required>
-                            </div>
-                            <button onclick="registrarMensualidad()">Registrar Mensualidad</button>
-                        </div>
-
-                        <h3>Mensualidades Registradas</h3>
-                        <div class="table-container">
-                            <table id="tablaMensualidades" class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Cliente</th>
-                                        <th>Placa</th>
-                                        <th>Tipo</th>
-                                        <th>Valor</th>
-                                        <th>Fecha Pago</th>
-                                        <th>Vigencia Inicio</th>
-                                        <th>Vigencia Fin</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    </tbody>
-                            </table>
-                        </div>
+                    <div class="input-group">
+                        <label for="entrada-tipo-vehiculo">Tipo de Vehículo:</label>
+                        <select id="entrada-tipo-vehiculo">
+                            <option value="moto">Moto</option>
+                            <option value="automovil">Automóvil/Camioneta</option>
+                            <option value="camion">Camión</option>
+                        </select>
                     </div>
+                    <button id="registrar-entrada-btn">Registrar Entrada</button>
+                    <p id="entrada-message" class="message"></p>
+                </div>
 
-                    <div id="perfil-admin" class="tab-content" style="display: none;">
-                        <h2>Mi Perfil (Administrador)</h2>
-                        <nav class="profile-sub-nav">
-                            <ul>
-                                <li><a href="#" onclick="showProfileSubTab('info-sistema')" class="active-sub-tab">Información del Sistema</a></li>
-                                <li><a href="#" onclick="showProfileSubTab('config-tarifas')">Configuración de Tarifas</a></li>
-                                <li><a href="#" onclick="showProfileSubTab('cambio-password-admin')">Cambiar Contraseña Admin</a></li>
-                                <li><a href="#" onclick="showProfileSubTab('gestion-usuarios')">Gestión de Usuarios Clientes</a></li>
-                            </ul>
-                        </nav>
-                        <div class="profile-sub-tab-content" id="info-sistema">
-                            <h3>Información del Sistema</h3>
-                            <p>Bienvenido al panel de administración del Parqueadero PPPB.</p>
-                            <p>Desde aquí puedes gestionar los parqueos por hora, las mensualidades, configurar tarifas y administrar usuarios.</p>
-                            <p><strong>Versión del Sistema:</strong> 1.0.1</p>
-                            <p><strong>Última Actualización:</strong> Julio 2025</p>
-                        </div>
-
-                        <div class="profile-sub-tab-content" id="config-tarifas" style="display:none;">
-                            <h3>Configuración de Tarifas</h3>
-                            <p>Ajuste las tarifas de parqueo por tipo de vehículo y las tarifas planas.</p>
-                            <div class="form-section">
-                                <h4>Tarifas de Moto</h4>
-                                <div class="input-group">
-                                    <label for="motoPorSegundo">Costo por Hora:</label>
-                                    <input type="number" id="motoPorSegundo" step="0.01" min="0">
-                                </div>
-                                <div class="input-group">
-                                    <label for="motoTarifaPlena">Tarifa Plena:</label>
-                                    <input type="number" id="motoTarifaPlena" min="0">
-                                </div>
-                                <div class="input-group">
-                                    <label for="motoTiempoTarifaPlena">Tiempo para Tarifa Plena (Horas):</label>
-                                    <input type="number" id="motoTiempoTarifaPlena" step="0.1" min="0">
-                                </div>
-                            </div>
-
-                            <div class="form-section">
-                                <h4>Tarifas de Automóvil/Camioneta</h4>
-                                <div class="input-group">
-                                    <label for="automovilPorSegundo">Costo por Hora:</label>
-                                    <input type="number" id="automovilPorSegundo" step="0.01" min="0">
-                                </div>
-                                <div class="input-group">
-                                    <label for="automovilTarifaPlena">Tarifa Plena:</label>
-                                    <input type="number" id="automovilTarifaPlena" min="0">
-                                </div>
-                                <div class="input-group">
-                                    <label for="automovilTiempoTarifaPlena">Tiempo para Tarifa Plena (Horas):</label>
-                                    <input type="number" id="automovilTiempoTarifaPlena" step="0.1" min="0">
-                                </div>
-                            </div>
-
-                            <div class="form-section">
-                                <h4>Tarifas de Camión</h4>
-                                <div class="input-group">
-                                    <label for="camionPorSegundo">Costo por Hora:</label>
-                                    <input type="number" id="camionPorSegundo" step="0.01" min="0">
-                                </div>
-                                <div class="input-group">
-                                    <label for="camionTarifaPlena">Tarifa Plena:</label>
-                                    <input type="number" id="camionTarifaPlena" min="0">
-                                </div>
-                                <div class="input-group">
-                                    <label for="camionTiempoTarifaPlena">Tiempo para Tarifa Plena (Horas):</label>
-                                    <input type="number" id="camionTiempoTarifaPlena" step="0.1" min="0">
-                                </div>
-                            </div>
-
-                            <div class="form-section">
-                                <h4>Configuración General</h4>
-                                <div class="input-group">
-                                    <label for="maxTiempoTarifaPlenaInput">Tiempo Máximo de Tarifa Plena (Horas):</label>
-                                    <input type="number" id="maxTiempoTarifaPlenaInput" step="0.1" min="0">
-                                </div>
-                            </div>
-                            <button id="btnGuardarTarifas">Guardar Configuraciones</button>
-                        </div>
-
-                        <div class="profile-sub-tab-content" id="cambio-password-admin" style="display:none;">
-                            <h3>Cambiar Contraseña del Administrador</h3>
-                            <div class="input-group">
-                                <label for="adminPassActual">Contraseña Actual:</label>
-                                <input type="password" id="adminPassActual" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="adminPassNueva">Nueva Contraseña:</label>
-                                <input type="password" id="adminPassNueva" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="adminPassNueva2">Confirmar Nueva Contraseña:</label>
-                                <input type="password" id="adminPassNueva2" required>
-                            </div>
-                            <button id="btnCambiarAdminPass">Cambiar Contraseña</button>
-                            <div id="mensajeAdminPass" class="message"></div>
-                        </div>
-
-                        <div class="profile-sub-tab-content" id="gestion-usuarios" style="display:none;">
-                            <h3>Gestión de Usuarios Clientes</h3>
-                            <div class="card">
-                                <h4>Buscar y Modificar Cliente</h4>
-                                <div class="input-group">
-                                    <label for="placaClienteGestion">Placa del Cliente:</label>
-                                    <input type="text" id="placaClienteGestion" maxlength="7" required>
-                                </div>
-                                <button id="btnBuscarCliente">Buscar Cliente</button>
-                                <div id="mensajeClienteGestion" class="message"></div>
-                            </div>
-
-                            <div id="cliente-info-display" class="card" style="display: none;">
-                                <h4>Información del Cliente</h4>
-                                <p><strong>Placa:</strong> <span id="displayPlacaClienteGestion"></span></p>
-                                <p><strong>Contraseña:</strong> <span id="displayPassClienteGestion"></span> (No se muestra la real por seguridad)</p>
-                                <hr>
-                                <h4>Restablecer Contraseña</h4>
-                                <div class="input-group">
-                                    <label for="nuevaPassCliente">Nueva Contraseña:</label>
-                                    <input type="password" id="nuevaPassCliente" required>
-                                </div>
-                                <div class="input-group">
-                                    <label for="confirmarNuevaPassCliente">Confirmar Nueva Contraseña:</label>
-                                    <input type="password" id="confirmarNuevaPassCliente" required>
-                                </div>
-                                <button id="btnRestablecerPassCliente">Restablecer Contraseña</button>
-                                <div id="mensajeRestablecerPass" class="message"></div>
-                            </div>
-                        </div>
+                <div class="form-section">
+                    <h4>Registrar Salida</h4>
+                    <div class="input-group">
+                        <label for="salida-placa">Placa:</label>
+                        <input type="text" id="salida-placa" placeholder="ABC-123">
                     </div>
-                </main>
+                    <button id="registrar-salida-btn">Registrar Salida</button>
+                    <p id="salida-info" class="message"></p>
+                    <button id="generar-comprobante-btn" class="hidden">Generar Comprobante</button>
+                </div>
+
+                <hr>
+
+                <h4>Vehículos Parqueados Actualmente</h4>
+                <div class="summary-cards">
+                    <div class="card">
+                        <h5>Motos</h5>
+                        <p id="motos-count">0</p>
+                    </div>
+                    <div class="card">
+                        <h5>Automóviles/Camionetas</h5>
+                        <p id="autos-count">0</p>
+                    </div>
+                    <div class="card">
+                        <h5>Camiones</h5>
+                        <p id="camiones-count">0</p>
+                    </div>
+                </div>
+                <table id="parqueados-table">
+                    <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Tipo</th>
+                            <th>Entrada</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+
+                <hr>
+
+                <h4>Historial de Parqueos</h4>
+                <table id="historial-table">
+                    <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Tipo</th>
+                            <th>Entrada</th>
+                            <th>Salida</th>
+                            <th>Duración</th>
+                            <th>Costo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
             </div>
 
-            <div id="cliente-panel" style="display: none;">
-                <main class="client-panel-main">
-                    <h2>Bienvenido, <span id="nombreCliente"></span></h2>
-                    <div class="card">
-                        <h3>Mis Mensualidades</h3>
-                        <div class="table-container">
-                            <table id="tablaMensualidadesCliente" class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Placa</th>
-                                        <th>Tipo</th>
-                                        <th>Vigencia Inicio</th>
-                                        <th>Vigencia Fin</th>
-                                        <th>Valor</th>
-                                        <th>Estado/Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    </tbody>
-                            </table>
-                        </div>
+            <div class="tab-content hidden" id="mensualidades">
+                <h3>Gestión de Mensualidades</h3>
+                <div class="form-section">
+                    <h4>Registrar Nueva Mensualidad</h4>
+                    <div class="input-group">
+                        <label for="mensualidad-placa">Placa:</label>
+                        <input type="text" id="mensualidad-placa" placeholder="XYZ-789">
                     </div>
+                    <div class="input-group">
+                        <label for="mensualidad-tipo-vehiculo">Tipo de Vehículo:</label>
+                        <select id="mensualidad-tipo-vehiculo">
+                            <option value="moto">Moto</option>
+                            <option value="automovil">Automóvil/Camioneta</option>
+                            <option value="camion">Camión</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="mensualidad-nombre-paga">Nombre de la Persona que Paga:</label>
+                        <input type="text" id="mensualidad-nombre-paga" placeholder="Nombre Completo">
+                    </div>
+                    <div class="input-group">
+                        <label for="mensualidad-valor">Valor de la Mensualidad:</label>
+                        <input type="number" id="mensualidad-valor" step="0.01" placeholder="Ej: 150000.00">
+                    </div>
+                    <div class="input-group">
+                        <label for="mensualidad-fecha-pago">Fecha de Pago (Opcional):</label>
+                        <input type="date" id="mensualidad-fecha-pago">
+                    </div>
+                    <div class="input-group">
+                        <label for="mensualidad-fecha-inicio">Fecha Inicio:</label>
+                        <input type="date" id="mensualidad-fecha-inicio">
+                    </div>
+                    <div class="input-group">
+                        <label for="mensualidad-fecha-fin">Fecha Fin:</label>
+                        <input type="date" id="mensualidad-fecha-fin">
+                    </div>
+                    <button id="registrar-mensualidad-btn">Registrar Mensualidad</button>
+                    <p id="mensualidad-message" class="message"></p>
+                </div>
 
-                    <div class="card">
-                        <h3>Cambiar Contraseña</h3>
-                        <div class="input-group">
-                            <label for="passActual">Contraseña Actual:</label>
-                            <input type="password" id="passActual" required onfocus="ocultarMensajePass()">
-                        </div>
-                        <div class="input-group">
-                            <label for="passNueva">Nueva Contraseña:</label>
-                            <input type="password" id="passNueva" required onfocus="ocultarMensajePass()">
-                        </div>
-                        <div class="input-group">
-                            <label for="passNueva2">Confirmar Nueva Contraseña:</label>
-                            <input type="password" id="passNueva2" required onfocus="ocultarMensajePass()">
-                        </div>
-                        <button id="btnCambiarPass">Cambiar Contraseña</button>
-                        <div id="mensajePass" class="message"></div>
+                <hr>
+
+                <h4>Historial de Mensualidades</h4>
+                <button id="exportar-mensualidades-btn">Exportar a Excel</button>
+                <table id="mensualidades-table">
+                    <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Tipo</th>
+                            <th>Pagador</th>
+                            <th>Valor</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                            <th>Fecha de Pago</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+
+            <div class="tab-content hidden" id="mi-perfil-admin">
+                <h3>Mi Perfil (Admin)</h3>
+                <div class="form-section">
+                    <h4>Configuración de Tarifas</h4>
+                    <div class="input-group">
+                        <label for="tarifa-moto-segundo">Moto (por segundo):</label>
+                        <input type="number" id="tarifa-moto-segundo" step="0.01" value="0.01">
                     </div>
-                </main>
+                    <div class="input-group">
+                        <label for="tarifa-auto-segundo">Automóvil/Camioneta (por segundo):</label>
+                        <input type="number" id="tarifa-auto-segundo" step="0.01" value="0.02">
+                    </div>
+                    <div class="input-group">
+                        <label for="tarifa-camion-segundo">Camión (por segundo):</label>
+                        <input type="number" id="tarifa-camion-segundo" step="0.01" value="0.03">
+                    </div>
+                    <div class="input-group">
+                        <label for="tarifa-plana-horas">Tarifa Plana (horas para aplicar):</label>
+                        <input type="number" id="tarifa-plana-horas" value="12">
+                    </div>
+                    <div class="input-group">
+                        <label for="tarifa-plana-valor">Tarifa Plana (valor):</label>
+                        <input type="number" id="tarifa-plana-valor" step="0.01" value="20000">
+                    </div>
+                    <button id="guardar-tarifas-btn">Guardar Tarifas</button>
+                    <p id="tarifas-message" class="message"></p>
+                </div>
+
+                <hr>
+
+                <h4>Gestión de Clientes</h4>
+                <div class="input-group">
+                    <label for="buscar-cliente-placa">Buscar Cliente por Placa:</label>
+                    <input type="text" id="buscar-cliente-placa" placeholder="Placa del cliente">
+                </div>
+                <button id="buscar-cliente-btn">Buscar</button>
+                <div id="cliente-info" class="card hidden">
+                    <h5>Información del Cliente:</h5>
+                    <p><strong>Placa:</strong> <span id="cliente-info-placa"></span></p>
+                    <p><strong>Contraseña:</strong> <span id="cliente-info-pass"></span></p>
+                    <button id="reset-pass-btn">Restablecer Contraseña (misma placa)</button>
+                </div>
+                <p id="cliente-gestion-message" class="message"></p>
+            </div>
+        </section>
+
+        <section id="client-panel" class="hidden">
+            <nav class="tabs">
+                <button class="tab-button active" data-tab="mis-mensualidades">Mis Mensualidades</button>
+                <button id="logout-btn-client" class="logout-button">Salir</button>
+            </nav>
+
+            <div class="tab-content active" id="mis-mensualidades">
+                <h3>Mis Mensualidades</h3>
+                <table id="client-mensualidades-table">
+                    <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Tipo</th>
+                            <th>Pagador</th>
+                            <th>Valor</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                            <th>Fecha de Pago</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+                <p id="client-mensualidades-message" class="message"></p>
             </div>
         </section>
     </div>
 
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
