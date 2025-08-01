@@ -190,7 +190,7 @@ async function login() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
 
-    if (username === 'admin' && password === '1234') {
+    if (username === 'admin' && password === 'Martin120619') {
         currentUserRole = 'admin';
         loginSection.classList.add('hidden');
         adminPanel.classList.remove('hidden');
