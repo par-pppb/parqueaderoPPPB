@@ -498,21 +498,26 @@ async function registrarMensualidad() {
         return;
     }
 
-    // Verificar solapamiento de fechas
-    const q = query(mensualidadesRef, where("placa", "==", placa));
-    const querySnapshot = await getDocs(q);
-    let solapamientoEncontrado = false;
+    // Verificar solapamiento de fechas (solo con mensualidades activas)
+const q = query(mensualidadesRef, where("placa", "==", placa));
+const querySnapshot = await getDocs(q);
+let solapamientoEncontrado = false;
+const fechaActual = new Date();
 
-    querySnapshot.forEach(doc => {
-        const data = doc.data();
-        const existingInicio = data.fechaInicio.toDate();
-        const existingFin = data.fechaFin.toDate();
+querySnapshot.forEach(doc => {
+    const data = doc.data();
+    const existingInicio = data.fechaInicio.toDate();
+    const existingFin = data.fechaFin.toDate();
 
+    // Solo verificar solapamiento si la mensualidad existente no ha vencido
+    // (es decir, si la fecha de fin es posterior a la fecha actual)
+    if (existingFin >= fechaActual) {
         // Check for overlap: (StartA <= EndB) and (EndA >= StartB)
         if (fechaInicio <= existingFin && fechaFin >= existingInicio) {
             solapamientoEncontrado = true;
         }
-    });
+    }
+});
 
     if (solapamientoEncontrado) {
         showMessage(mensualidadMessage, `Ya existe una mensualidad activa o solapada para la placa ${placa} en el período seleccionado.`, false);
