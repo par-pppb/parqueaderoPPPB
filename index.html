@@ -8,6 +8,7 @@
     <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -29,59 +30,62 @@
 
         <section id="admin-panel" class="hidden">
             <nav class="tabs">
-                <button class="tab-button active" data-tab="parqueo-horas">Cálculo por Horas</button>
+                <button class="tab-button active" data-tab="parqueadero">Parqueadero</button>
                 <button class="tab-button" data-tab="mensualidades">Mensualidades</button>
-                <button class="tab-button" data-tab="mi-perfil-admin">Mi Perfil (Admin)</button>
-                <button id="logout-btn-admin" class="logout-button">Salir</button>
+                <button class="tab-button" data-tab="historial">Historial</button>
+                <button class="tab-button" data-tab="ajustes">Ajustes</button>
+                <button class="tab-button" data-tab="gestion-clientes">Gestión Clientes</button>
+                <button id="logout-btn" class="logout-button">Salir</button>
             </nav>
 
-            <div class="tab-content active" id="parqueo-horas">
-                <h3>Gestión de Parqueo por Horas</h3>
-                <div class="form-section">
-                    <h4>Registrar Entrada</h4>
-                    <div class="input-group">
-                        <label for="entrada-placa">Placa:</label>
-                        <input type="text" id="entrada-placa" placeholder="ABC-123">
-                    </div>
-                    <div class="input-group">
-                        <label for="entrada-tipo-vehiculo">Tipo de Vehículo:</label>
-                        <select id="entrada-tipo-vehiculo">
-                            <option value="moto">Moto</option>
-                            <option value="automovil">Automóvil/Camioneta</option>
-                            <option value="camion">Camión</option>
-                        </select>
-                    </div>
-                    <button id="registrar-entrada-btn">Registrar Entrada</button>
-                    <p id="entrada-message" class="message"></p>
-                </div>
-
-                <div class="form-section">
-                    <h4>Registrar Salida</h4>
-                    <div class="input-group">
-                        <label for="salida-placa">Placa:</label>
-                        <input type="text" id="salida-placa" placeholder="ABC-123">
-                    </div>
-                    <button id="registrar-salida-btn">Registrar Salida</button>
-                    <p id="salida-info" class="message"></p>
-                    <button id="generar-comprobante-btn" class="hidden">Generar Comprobante</button>
-                </div>
-
-                <hr>
-
-                <h4>Vehículos Parqueados Actualmente</h4>
+            <div class="tab-content" id="parqueadero">
+                <h2>Parqueadero</h2>
                 <div class="summary-cards">
-                    <div class="card">
-                        <h5>Motos</h5>
-                        <p id="motos-count">0</p>
+                    <div class="summary-card">
+                        <h4>Vehículos Actuales</h4>
+                        <p id="total-vehiculos-p"></p>
                     </div>
-                    <div class="card">
-                        <h5>Automóviles/Camionetas</h5>
-                        <p id="autos-count">0</p>
+                    <div class="summary-card">
+                        <h4>Cupos Disponibles</h4>
+                        <p id="cupos-disponibles-p"></p>
                     </div>
-                    <div class="card">
-                        <h5>Camiones</h5>
-                        <p id="camiones-count">0</p>
+                    <div class="summary-card">
+                        <h4>Total Generado</h4>
+                        <p id="total-generado-p"></p>
                     </div>
+                </div>
+
+                <div class="entry-card">
+                    <h3>Registrar Entrada</h3>
+                    <div class="input-group inline">
+                        <label for="placa-entrada">Placa:</label>
+                        <input type="text" id="placa-entrada" placeholder="Placa">
+                        <label for="tipo-vehiculo-entrada">Tipo:</label>
+                        <select id="tipo-vehiculo-entrada">
+                            <option value="carro">Carro</option>
+                            <option value="moto">Moto</option>
+                            <option value="bici">Bici</option>
+                        </select>
+                        <button id="registrar-entrada-btn">Entrada</button>
+                    </div>
+                    <p id="entrada-message" class="entry-exit-message"></p>
+                </div>
+
+                <div class="exit-card">
+                    <h3>Registrar Salida</h3>
+                    <div class="input-group inline">
+                        <label for="placa-salida">Placa:</label>
+                        <input type="text" id="placa-salida" placeholder="Placa">
+                        <button id="registrar-salida-btn">Salida</button>
+                        <button id="generar-comprobante-btn" class="generar-comprobante-btn hidden">Comprobante</button>
+                    </div>
+                    <p id="salida-message" class="entry-exit-message"></p>
+                </div>
+
+                <h3>Vehículos Parqueados</h3>
+                <div class="search-input">
+                    <input type="text" id="buscar-parqueados" placeholder="Buscar por placa...">
+                    <button onclick="buscarVehiculoParqueado()">Buscar</button>
                 </div>
                 <table id="parqueados-table">
                     <thead>
@@ -89,26 +93,7 @@
                             <th>Placa</th>
                             <th>Tipo</th>
                             <th>Entrada</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        </tbody>
-                </table>
-
-                <hr>
-
-                <h4>Historial de Parqueos</h4>
-                <table id="historial-table">
-                    <thead>
-                        <tr>
-                            <th>Placa</th>
-                            <th>Tipo</th>
-                            <th>Entrada</th>
-                            <th>Salida</th>
-                            <th>Duración</th>
-                            <th>Costo</th>
-                            <th>Acciones</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -117,50 +102,35 @@
             </div>
 
             <div class="tab-content hidden" id="mensualidades">
-                <h3>Gestión de Mensualidades</h3>
-                <div class="form-section">
-                    <h4>Registrar Nueva Mensualidad</h4>
+                <h2>Mensualidades</h2>
+                <div class="entry-card">
+                    <h3>Registrar Mensualidad</h3>
                     <div class="input-group">
-                        <label for="mensualidad-placa">Placa:</label>
-                        <input type="text" id="mensualidad-placa" placeholder="XYZ-789">
+                        <label for="placa-mensualidad">Placa:</label>
+                        <input type="text" id="placa-mensualidad" placeholder="Placa">
                     </div>
                     <div class="input-group">
-                        <label for="mensualidad-tipo-vehiculo">Tipo de Vehículo:</label>
-                        <select id="mensualidad-tipo-vehiculo">
+                        <label for="tipo-mensualidad">Tipo:</label>
+                        <select id="tipo-mensualidad">
+                            <option value="carro">Carro</option>
                             <option value="moto">Moto</option>
-                            <option value="automovil">Automóvil/Camioneta</option>
-                            <option value="camion">Camión</option>
+                            <option value="bici">Bici</option>
                         </select>
                     </div>
                     <div class="input-group">
-                        <label for="mensualidad-nombre-paga">Nombre de la Persona que Paga:</label>
-                        <input type="text" id="mensualidad-nombre-paga" placeholder="Nombre Completo">
+                        <label for="valor-mensualidad">Valor:</label>
+                        <input type="number" id="valor-mensualidad" placeholder="Valor">
                     </div>
                     <div class="input-group">
-                        <label for="mensualidad-valor">Valor de la Mensualidad:</label>
-                        <input type="number" id="mensualidad-valor" step="0.01" placeholder="Ej: 150000.00">
-                    </div>
-                    <div class="input-group">
-                        <label for="mensualidad-fecha-pago">Fecha de Pago (Opcional):</label>
-                        <input type="date" id="mensualidad-fecha-pago">
-                    </div>
-                    <div class="input-group">
-                        <label for="mensualidad-fecha-inicio">Fecha Inicio:</label>
-                        <input type="date" id="mensualidad-fecha-inicio">
-                    </div>
-                    <div class="input-group">
-                        <label for="mensualidad-fecha-fin">Fecha Fin:</label>
-                        <input type="date" id="mensualidad-fecha-fin">
+                        <label for="pagador-mensualidad">Pagador:</label>
+                        <input type="text" id="pagador-mensualidad" placeholder="Nombre del pagador">
                     </div>
                     <button id="registrar-mensualidad-btn">Registrar Mensualidad</button>
                     <p id="mensualidad-message" class="message"></p>
                 </div>
 
-                <hr>
-
-                <h4>Historial de Mensualidades</h4>
-                <button id="exportar-mensualidades-btn">Exportar a Excel</button>
-                <table id="mensualidades-table">
+                <h3>Mensualidades Activas</h3>
+                <table id="tabla-mensualidades">
                     <thead>
                         <tr>
                             <th>Placa</th>
@@ -171,7 +141,25 @@
                             <th>Fin</th>
                             <th>Fecha de Pago</th>
                             <th>Estado</th>
-                            <th>Acciones</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+                <button id="exportar-mensualidades-btn" class="exportar-mensualidades-btn">Exportar a Excel</button>
+                
+                <h3>Mensualidades Vencidas</h3>
+                <table id="tabla-mensualidades-vencidas">
+                    <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Tipo</th>
+                            <th>Pagador</th>
+                            <th>Valor</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                            <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -179,47 +167,63 @@
                 </table>
             </div>
 
-            <div class="tab-content hidden" id="mi-perfil-admin">
-                <h3>Mi Perfil (Admin)</h3>
-                <div class="form-section">
-                    <h4>Configuración de Tarifas</h4>
-                    <div class="input-group">
-                        <label for="tarifa-moto-segundo">Moto (por segundo):</label>
-                        <input type="number" id="tarifa-moto-segundo" step="0.01" value="0.01">
-                    </div>
-                    <div class="input-group">
-                        <label for="tarifa-auto-segundo">Automóvil/Camioneta (por segundo):</label>
-                        <input type="number" id="tarifa-auto-segundo" step="0.01" value="0.02">
-                    </div>
-                    <div class="input-group">
-                        <label for="tarifa-camion-segundo">Camión (por segundo):</label>
-                        <input type="number" id="tarifa-camion-segundo" step="0.01" value="0.03">
-                    </div>
-                    <div class="input-group">
-                        <label for="tarifa-plana-horas">Tarifa Plana (horas para aplicar):</label>
-                        <input type="number" id="tarifa-plana-horas" value="12">
-                    </div>
-                    <div class="input-group">
-                        <label for="tarifa-plana-valor">Tarifa Plana (valor):</label>
-                        <input type="number" id="tarifa-plana-valor" step="0.01" value="20000">
-                    </div>
-                    <button id="guardar-tarifas-btn">Guardar Tarifas</button>
-                    <p id="tarifas-message" class="message"></p>
-                </div>
+            <div class="tab-content hidden" id="historial">
+                <h2>Historial de Parqueo</h2>
+                <table id="historial-table">
+                    <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Tipo</th>
+                            <th>Entrada</th>
+                            <th>Salida</th>
+                            <th>Tiempo</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
 
-                <hr>
-
-                <h4>Gestión de Clientes</h4>
-                <div class="input-group">
-                    <label for="buscar-cliente-placa">Buscar Cliente por Placa:</label>
-                    <input type="text" id="buscar-cliente-placa" placeholder="Placa del cliente">
+            <div class="tab-content hidden" id="ajustes">
+                <h2>Ajustes de Tarifas</h2>
+                <div class="ajustes-card">
+                    <div class="input-group">
+                        <label for="tarifa-hora-carro">Tarifa por Hora (Carro):</label>
+                        <input type="number" id="tarifa-hora-carro">
+                    </div>
+                    <div class="input-group">
+                        <label for="tarifa-hora-moto">Tarifa por Hora (Moto):</label>
+                        <input type="number" id="tarifa-hora-moto">
+                    </div>
+                    <div class="input-group">
+                        <label for="tarifa-hora-bici">Tarifa por Hora (Bici):</label>
+                        <input type="number" id="tarifa-hora-bici">
+                    </div>
+                    <div class="input-group">
+                        <label for="cupos-maximos">Cupos Máximos:</label>
+                        <input type="number" id="cupos-maximos">
+                    </div>
+                    <button id="guardar-tarifas-btn">Guardar Ajustes</button>
+                    <p id="ajustes-message" class="message"></p>
                 </div>
-                <button id="buscar-cliente-btn">Buscar</button>
-                <div id="cliente-info" class="card hidden">
-                    <h5>Información del Cliente:</h5>
+            </div>
+
+            <div class="tab-content hidden" id="gestion-clientes">
+                <h2>Gestión de Clientes</h2>
+                <div class="auth-card">
+                    <h3>Buscar Cliente</h3>
+                    <div class="input-group">
+                        <label for="placa-cliente">Placa del Cliente:</label>
+                        <input type="text" id="placa-cliente" placeholder="Placa">
+                    </div>
+                    <button id="buscar-cliente-btn">Buscar Cliente</button>
+                </div>
+                <div id="cliente-info" class="auth-card hidden">
+                    <h3>Información del Cliente</h3>
                     <p><strong>Placa:</strong> <span id="cliente-info-placa"></span></p>
                     <p><strong>Contraseña:</strong> <span id="cliente-info-pass"></span></p>
-                    <button id="reset-pass-btn">Restablecer Contraseña (misma placa)</button>
+                    <button id="reset-pass-btn" class="reset-pass-btn">Restablecer Contraseña (misma placa)</button>
                 </div>
                 <p id="cliente-gestion-message" class="message"></p>
             </div>
