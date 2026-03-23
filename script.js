@@ -1,5 +1,8 @@
 // script.js
 
+let campoOrden = null;
+let direccionOrden = "asc"; // asc o desc
+
 // 1. Importa las funciones necesarias de Firebase SDKs
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
@@ -351,11 +354,33 @@ async function loadParqueados() {
 }
 
 async function loadHistorialParqueos() {
+    const textoBusqueda = document.getElementById('buscar-placa')?.value.toUpperCase() || "";
+    const tipoFiltro = document.getElementById('filtro-tipo')?.value || "";
+    const fechaInicio = document.getElementById('fecha-inicio')?.value;
+    const fechaFin = document.getElementById('fecha-fin')?.value;
     const querySnapshot = await getDocs(historialRef);
     historialTableBody.innerHTML = '';
 
     querySnapshot.forEach(docSnapshot => {
         const data = docSnapshot.data();
+
+            // FILTRO POR PLACA
+            if (textoBusqueda && !data.placa.includes(textoBusqueda)) return;
+
+            // FILTRO POR TIPO
+            if (tipoFiltro && data.tipoVehiculo !== tipoFiltro) return;
+
+            // FILTRO POR FECHA
+            if (fechaInicio) {
+                const fechaEntrada = data.horaEntrada.toDate();
+                if (fechaEntrada < new Date(fechaInicio)) return;
+            }
+
+            if (fechaFin) {
+                const fechaEntrada = data.horaEntrada.toDate();
+                if (fechaEntrada > new Date(fechaFin)) return;
+            }
+
         const docId = docSnapshot.id;
         const row = historialTableBody.insertRow();
         row.innerHTML = `
@@ -548,41 +573,120 @@ async function registrarMensualidad() {
 }
 
 async function loadMensualidades() {
+    let vencidas = 0;
+    const textoBusqueda = document.getElementById('buscar-placa-mensualidad')?.value.toUpperCase() || "";
+    const tipoFiltro = document.getElementById('filtro-tipo-mensualidad')?.value || "";
+    const estadoFiltro = document.getElementById('filtro-estado-mensualidad')?.value || "";
+
     const querySnapshot = await getDocs(mensualidadesRef);
     mensualidadesTableBody.innerHTML = '';
 
+    let lista = [];
+
+    // 🔹 1. GUARDAR DATOS
     querySnapshot.forEach(docSnapshot => {
         const data = docSnapshot.data();
         const docId = docSnapshot.id;
+
         const now = new Date();
         const inicio = data.fechaInicio.toDate();
         const fin = data.fechaFin.toDate();
+
         let estado = 'Activa';
-        if (now < inicio) {
-            estado = 'Pendiente';
-        } else if (now > fin) {
-            estado = 'Vencida';
+        if (now < inicio) estado = 'Pendiente';
+        else if (now > fin) estado = 'Vencida';
+        if (estado === "Vencida") {
+            vencidas++;
+            }
+
+
+        const alertaDiv = document.getElementById("alerta-vencidas");
+
+        if (vencidas > 0) {
+            alertaDiv.textContent = `⚠️ Tienes ${vencidas} mensualidades vencidas`;
+            alertaDiv.classList.remove("hidden");
+        } 
+        else {
+            alertaDiv.classList.add("hidden");
         }
-        const fechaPagoDisplay = data.fechaPago ? data.fechaPago.toDate().toLocaleDateString('es-CO') : 'N/A'; // Formato de fecha local
-        const nombrePagaDisplay = data.nombrePersonaPaga || 'N/A';
-        const valorMensualidadDisplay = data.valorMensualidad ? data.valorMensualidad.toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) : 'N/A';
 
+        // 🔍 FILTROS
+        if (textoBusqueda && !data.placa.includes(textoBusqueda)) return;
+        if (tipoFiltro && data.tipoVehiculo !== tipoFiltro) return;
+        if (estadoFiltro && estado !== estadoFiltro) return;
 
+        lista.push({
+            ...data,
+            docId,
+            estado,
+            inicio,
+            fin
+        });
+    });
+
+    // 🔹 2. ORDENAR
+    if (campoOrden) {
+        lista.sort((a, b) => {
+            let valA = a[campoOrden];
+            let valB = b[campoOrden];
+
+            if (campoOrden === "fechaInicio") {
+                valA = a.inicio;
+                valB = b.inicio;
+            }
+
+            if (campoOrden === "fechaFin") {
+                valA = a.fin;
+                valB = b.fin;
+            }
+
+            if (valA instanceof Date) valA = valA.getTime();
+            if (valB instanceof Date) valB = valB.getTime();
+
+            if (typeof valA === "string") valA = valA.toLowerCase();
+            if (typeof valB === "string") valB = valB.toLowerCase();
+
+            if (valA < valB) return direccionOrden === "asc" ? -1 : 1;
+            if (valA > valB) return direccionOrden === "asc" ? 1 : -1;
+            return 0;
+        });
+    }
+
+    // 🔹 3. PINTAR TABLA
+    lista.forEach(item => {
         const row = mensualidadesTableBody.insertRow();
+
+        const fechaPagoDisplay = item.fechaPago ? item.fechaPago.toDate().toLocaleDateString('es-CO') : 'N/A';
+        const nombrePagaDisplay = item.nombrePersonaPaga || 'N/A';
+        const valorMensualidadDisplay = item.valorMensualidad ? item.valorMensualidad.toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) : 'N/A';
+
         row.innerHTML = `
-            <td>${data.placa}</td>
-            <td>${data.tipoVehiculo}</td>
-            <td>${nombrePagaDisplay}</td>
-            <td>${valorMensualidadDisplay}</td>
-            <td>${inicio.toLocaleDateString('es-CO')}</td>
-            <td>${fin.toLocaleDateString('es-CO')}</td>
-            <td>${fechaPagoDisplay}</td>
-            <td><span class="status-${estado.toLowerCase()}">${estado}</span></td>
-            <td>
-                <button class="small-btn delete-btn" data-action="delete-mensualidad" data-id="${docId}">Eliminar</button>
+            <td data-label="Placa">${item.placa}</td>
+            <td data-label="Tipo">${item.tipoVehiculo}</td>
+            <td data-label="Pagador">${nombrePagaDisplay}</td>
+            <td data-label="Valor">${valorMensualidadDisplay}</td>
+            <td data-label="Inicio">${item.inicio.toLocaleDateString('es-CO')}</td>
+            <td data-label="Fin">${item.fin.toLocaleDateString('es-CO')}</td>
+            <td data-label="Pago">${fechaPagoDisplay}</td>
+            <td data-label="Estado">${item.estado}</td>
+            <td data-label="Acciones">
+                <button class="small-btn pdf-btn">PDF</button>
+                <button class="small-btn whatsapp-btn">WA</button>
+                <button class="small-btn delete-btn">X</button>
             </td>
         `;
-        row.querySelector('[data-action="delete-mensualidad"]').addEventListener('click', () => deleteMensualidad(docId));
+
+        row.querySelector('.pdf-btn').addEventListener('click', () => {
+            generarComprobanteMensualidad(item);
+        });
+
+        row.querySelector('.whatsapp-btn').addEventListener('click', () => {
+            enviarWhatsApp(item);
+        });
+
+        row.querySelector('.delete-btn').addEventListener('click', () => {
+            deleteMensualidad(item.docId);
+        });
     });
 }
 
@@ -600,6 +704,29 @@ async function deleteMensualidad(docId) {
             showMessage(mensualidadMessage, `Error al eliminar mensualidad: ${e.message}`, false);
         }
     }
+}
+
+function enviarWhatsApp(data) {
+    const fechaPago = data.fechaPago 
+        ? data.fechaPago.toDate().toLocaleDateString('es-CO') 
+        : 'N/A';
+
+    const mensaje = `*PARQUEADERO PPPB*
+
+🚘 Placa: ${data.placa}
+📋 Tipo: ${data.tipoVehiculo}
+👤 Pagador: ${data.nombrePersonaPaga}
+💰 Valor: ${data.valorMensualidad}
+
+📅 Inicio: ${data.inicio.toLocaleDateString('es-CO')}
+📅 Fin: ${data.fin.toLocaleDateString('es-CO')}
+📅 Pago: ${fechaPago}
+
+📊 Estado: ${data.estado}
+`;
+
+    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, "_blank");
 }
 
 function exportarMensualidadesToExcel() {
@@ -724,18 +851,20 @@ async function loadClientMensualidades(placa) {
 
         const row = clientMensualidadesTableBody.insertRow();
         row.innerHTML = `
-            <td>${data.placa}</td>
-            <td>${data.tipoVehiculo}</td>
-            <td>${nombrePagaDisplay}</td>
-            <td>${valorMensualidadDisplay}</td>
-            <td>${inicio.toLocaleDateString('es-CO')}</td>
-            <td>${fin.toLocaleDateString('es-CO')}</td>
-            <td>${fechaPagoDisplay}</td>
-            <td><span class="status-${estado.toLowerCase()}">${estado}</span></td>
-            <td>
-                <button class="small-btn download-mensualidad-btn" data-doc-id="${doc.id}">Descargar Comprobante</button>
-            </td>
-        `;
+                <td data-label="Placa">${data.placa}</td>
+                <td data-label="Tipo">${item.tipoVehiculo}</td>
+                <td data-label="Pagador">${nombrePagaDisplay}</td>
+                <td data-label="Valor">${valorMensualidadDisplay}</td>
+                <td data-label="Inicio">${item.inicio.toLocaleDateString('es-CO')}</td>
+                <td data-label="Fin">${item.fin.toLocaleDateString('es-CO')}</td>
+                <td data-label="Pago">${fechaPagoDisplay}</td>
+                <td data-label="Estado">${item.estado}</td>
+                <td data-label="Acciones">
+                    <button class="small-btn pdf-btn">PDF</button>
+                    <button class="small-btn whatsapp-btn">WA</button>
+                    <button class="small-btn delete-btn">X</button>
+                </td>
+            `;
         // Attach event listener to the download button for mensualidad
         row.querySelector('.download-mensualidad-btn').addEventListener('click', () => generarComprobanteMensualidad(data));
     });
@@ -979,3 +1108,41 @@ exportarMensualidadesBtn.addEventListener('click', exportarMensualidadesToExcel)
 guardarTarifasBtn.addEventListener('click', guardarTarifas);
 buscarClienteBtn.addEventListener('click', buscarCliente);
 resetPassBtn.addEventListener('click', resetearContrasenaCliente);
+
+document.getElementById('buscar-placa')?.addEventListener('input', loadHistorialParqueos);
+document.getElementById('filtro-tipo')?.addEventListener('change', loadHistorialParqueos);
+document.getElementById('fecha-inicio')?.addEventListener('change', loadHistorialParqueos);
+document.getElementById('fecha-fin')?.addEventListener('change', loadHistorialParqueos);
+
+document.getElementById('buscar-placa-mensualidad')?.addEventListener('input', loadMensualidades);
+document.getElementById('filtro-tipo-mensualidad')?.addEventListener('change', loadMensualidades);
+document.getElementById('filtro-estado-mensualidad')?.addEventListener('change', loadMensualidades);
+
+// ACTIVAR ORDENAMIENTO AL HACER CLICK EN ENCABEZADOS
+document.querySelectorAll("#mensualidades-table th[data-sort]").forEach(th => {
+    th.addEventListener("click", () => {
+        const nuevoCampo = th.getAttribute("data-sort");
+
+        if (campoOrden === nuevoCampo) {
+            direccionOrden = direccionOrden === "asc" ? "desc" : "asc";
+        } else {
+            campoOrden = nuevoCampo;
+            direccionOrden = "asc";
+        }
+
+        // 🔽 LIMPIAR ICONOS
+        document.querySelectorAll(".sort-icon").forEach(icon => icon.textContent = "");
+
+        // 🔽 AGREGAR ICONO
+        const icon = th.querySelector(".sort-icon");
+        icon.textContent = direccionOrden === "asc" ? "↑" : "↓";
+
+        loadMensualidades();
+    });
+
+    if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js")
+        .then(() => console.log("Service Worker registrado"))
+        .catch(err => console.log("Error SW:", err));
+        }
+});
