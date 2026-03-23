@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#635BFF">
+    <link rel="apple-touch-icon" href="img/icono-192.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <title>Parqueadero PPPB</title>
     <link rel="stylesheet" href="styles.css">
     <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
@@ -69,18 +73,29 @@
                 <hr>
 
                 <h4>Vehículos Parqueados Actualmente</h4>
-                <div class="summary-cards">
-                    <div class="card">
-                        <h5>Motos</h5>
-                        <p id="motos-count">0</p>
+                <div class="dashboard-cards">
+                    <div class="dashboard-card">
+                        <div class="card-icon">🏍️</div>
+                        <div>
+                            <h4>Motos</h4>
+                            <p id="motos-count">0</p>
+                        </div>
                     </div>
-                    <div class="card">
-                        <h5>Automóviles/Camionetas</h5>
-                        <p id="autos-count">0</p>
+
+                    <div class="dashboard-card">
+                        <div class="card-icon">🚗</div>
+                        <div>
+                            <h4>Automóviles</h4>
+                            <p id="autos-count">0</p>
+                        </div>
                     </div>
-                    <div class="card">
-                        <h5>Camiones</h5>
-                        <p id="camiones-count">0</p>
+
+                    <div class="dashboard-card">
+                        <div class="card-icon">🚚</div>
+                        <div>
+                            <h4>Camiones</h4>
+                            <p id="camiones-count">0</p>
+                        </div>
                     </div>
                 </div>
                 <table id="parqueados-table">
@@ -99,6 +114,19 @@
                 <hr>
 
                 <h4>Historial de Parqueos</h4>
+                <div class="filtros">
+                    <input type="text" id="buscar-placa" placeholder="🔍 Buscar por placa">
+
+                    <select id="filtro-tipo">
+                        <option value="">Todos los tipos</option>
+                        <option value="moto">Moto</option>
+                        <option value="automovil">Automóvil</option>
+                        <option value="camion">Camión</option>
+                    </select>
+
+                    <input type="date" id="fecha-inicio">
+                    <input type="date" id="fecha-fin">
+                </div>
                 <table id="historial-table">
                     <thead>
                         <tr>
@@ -159,21 +187,38 @@
                 <hr>
 
                 <h4>Historial de Mensualidades</h4>
+                <div class="filtros">
+                    <input type="text" id="buscar-placa-mensualidad" placeholder="🔍 Buscar por placa">
+
+                    <select id="filtro-tipo-mensualidad">
+                        <option value="">Todos los tipos</option>
+                        <option value="moto">Moto</option>
+                        <option value="automovil">Automóvil</option>
+                        <option value="camion">Camión</option>
+                    </select>
+
+                    <select id="filtro-estado-mensualidad">
+                        <option value="">Todos los estados</option>
+                        <option value="Activa">Activa</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Vencida">Vencida</option>
+                    </select>
+                </div>
                 <button id="exportar-mensualidades-btn">Exportar a Excel</button>
                 <table id="mensualidades-table">
                     <thead>
                         <tr>
-                            <th>Placa</th>
-                            <th>Tipo</th>
-                            <th>Pagador</th>
-                            <th>Valor</th>
-                            <th>Inicio</th>
-                            <th>Fin</th>
-                            <th>Fecha de Pago</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
+                            <th data-sort="placa">PLACA <span class="sort-icon"></span></th>
+                            <th data-sort="tipoVehiculo">TIPO <span class="sort-icon"></span></th>
+                            <th data-sort="nombrePersonaPaga">PAGADOR <span class="sort-icon"></span></th>
+                            <th data-sort="valorMensualidad">VALOR <span class="sort-icon"></span></th>
+                            <th data-sort="fechaInicio">INICIO <span class="sort-icon"></span></th>
+                            <th data-sort="fechaFin">FIN <span class="sort-icon"></span></th>
+                            <th data-sort="fechaPago">FECHA <span class="sort-icon"></span></th>
+                            <th data-sort="estado">ESTADO <span class="sort-icon"></span></th>
+                            <th>ACCIONES</th>
                         </tr>
-                    </thead>
+                        </thead>
                     <tbody>
                         </tbody>
                 </table>
@@ -231,6 +276,7 @@
                 <button id="logout-btn-client" class="logout-button">Salir</button>
             </nav>
 
+            <div id="alerta-vencidas" class="alerta hidden"></div>
             <div class="tab-content active" id="mis-mensualidades">
                 <h3>Mis Mensualidades</h3>
                 <table id="client-mensualidades-table">
