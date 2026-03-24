@@ -1062,10 +1062,10 @@ const nombreArchivo = `Mensualidad_${data.placa}.pdf`;
 doc.save(nombreArchivo);
 
 // 🔷 MENSAJE SIN LINK
-const mensaje = `Hola 👋, aquí tienes tu comprobante de pago.\n(El archivo se descarga en tu dispositivo)`;
+const mensaje = `Hola 👋, aquí tienes tu comprobante de pago del mes en curso`;
 
 // 🔷 ABRIR WHATSAPP
-const link = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+const link = `whatsapp://send?text=${encodeURIComponent(mensaje)}`;
 
 window.open(link, "_blank");
 
