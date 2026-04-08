@@ -157,34 +157,37 @@ button:active {
 /* Estilos para las pestañas de navegación */
 .tabs {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 10px;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #e0e0e0;
+    justify-content: center; /* 🔥 CENTRADO */
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 25px;
+    border-bottom: none; /* 🔥 quitamos línea fea */
 }
 
 .tab-button {
-    background-color: #e0e0e0;
-    color: #555;
-    padding: 10px 15px;
+    flex: 1; /* 🔥 todos del mismo tamaño */
+    background: linear-gradient(90deg, #6a5cff, #4b3fff);
+    color: white;
+    padding: 14px;
     border: none;
-    border-radius: 8px 8px 0 0;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 0.9em;
+    font-size: 0.95em;
     font-weight: 600;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: 0.3s;
+    text-align: center;
 }
 
 .tab-button.active {
-    background-color: #fff;
-    color: #4CAF50;
+    background: linear-gradient(90deg, #4CAF50, #2e7d32);
+    color: white;
     border-bottom: 2px solid #4CAF50;
     margin-bottom: -2px; /* Superponer el borde */
 }
 
-.tab-button:hover:not(.active) {
-    background-color: #d1d1d1;
+.tab-button:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
 }
 
 .logout-button {
@@ -531,4 +534,36 @@ button {
 
 button:active {
     transform: scale(0.95);
+}
+
+/* --- ESTILOS PARA DISEÑO HORIZONTAL (ACTUALIZADOS) --- */
+.paneles-horizontales {
+    display: flex;
+    gap: 20px; 
+    align-items: flex-start; 
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+/* Hacemos que cada panel sea una "tarjeta" separada */
+.paneles-horizontales .form-section {
+    flex: 1; 
+    margin-bottom: 0;
+    min-width: 0; /* Evita que los inputs empujen el cuadro */
+    background-color: #ffffff; /* Fondo blanco */
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0; /* Borde sutil */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); /* Sombreado suave */
+}
+
+/* En celulares o ventanas pequeñas, vuelven a estar en vertical */
+@media (max-width: 768px) {
+    .paneles-horizontales {
+        flex-direction: column;
+    }
+    .paneles-horizontales .form-section {
+        width: 100%;
+        box-sizing: border-box; /* Evita que se salgan de la pantalla */
+    }
 }
