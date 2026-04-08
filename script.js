@@ -632,13 +632,7 @@ async function loadMensualidades() {
 
     const alertaDiv = document.getElementById("alerta-vencidas");
 
-        if (vencidas > 0) {
-            alertaDiv.textContent = `⚠️ Tienes ${vencidas} mensualidades vencidas`;
-            alertaDiv.classList.remove("hidden");
-        } 
-        else {
-            alertaDiv.classList.add("hidden");
-        }
+
 
     // 🔹 2. ORDENAR
     if (campoOrden) {
