@@ -1,17 +1,42 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parqueadero PPPB</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#635BFF">
     <link rel="apple-touch-icon" href="img/icono-192.png">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <title>Parqueadero PPPB</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=5">
     <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        /* CSS GRID - ESTO OBLIGA A DIVIDIR LA PANTALLA EN 2 COLUMNAS EXACTAS */
+        .layout-columnas {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 20px !important;
+            width: 100% !important;
+            margin-bottom: 20px;
+        }
+        .layout-columnas .form-section {
+            background-color: #ffffff !important;
+            padding: 20px !important;
+            border-radius: 12px !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+            margin-bottom: 0 !important;
+        }
+        /* Solo se pone vertical si la pantalla es muy pequeña (teléfonos) */
+        @media (max-width: 800px) {
+            .layout-columnas {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -41,33 +66,36 @@
 
             <div class="tab-content active" id="parqueo-horas">
                 <h3>Gestión de Parqueo por Horas</h3>
-                <div class="form-section">
-                    <h4>Registrar Entrada</h4>
-                    <div class="input-group">
-                        <label for="entrada-placa">Placa:</label>
-                        <input type="text" id="entrada-placa" placeholder="ABC-123">
+                
+                <div class="layout-columnas">
+                    <div class="form-section">
+                        <h4>Registrar Entrada</h4>
+                        <div class="input-group">
+                            <label for="entrada-placa">Placa:</label>
+                            <input type="text" id="entrada-placa" placeholder="ABC-123">
+                        </div>
+                        <div class="input-group">
+                            <label for="entrada-tipo-vehiculo">Tipo de Vehículo:</label>
+                            <select id="entrada-tipo-vehiculo">
+                                <option value="moto">Moto</option>
+                                <option value="automovil">Automóvil/Camioneta</option>
+                                <option value="camion">Camión</option>
+                            </select>
+                        </div>
+                        <button id="registrar-entrada-btn">Registrar Entrada</button>
+                        <p id="entrada-message" class="message"></p>
                     </div>
-                    <div class="input-group">
-                        <label for="entrada-tipo-vehiculo">Tipo de Vehículo:</label>
-                        <select id="entrada-tipo-vehiculo">
-                            <option value="moto">Moto</option>
-                            <option value="automovil">Automóvil/Camioneta</option>
-                            <option value="camion">Camión</option>
-                        </select>
-                    </div>
-                    <button id="registrar-entrada-btn">Registrar Entrada</button>
-                    <p id="entrada-message" class="message"></p>
-                </div>
 
-                <div class="form-section">
-                    <h4>Registrar Salida</h4>
-                    <div class="input-group">
-                        <label for="salida-placa">Placa:</label>
-                        <input type="text" id="salida-placa" placeholder="ABC-123">
+                    <div class="form-section">
+                        <h4>Registrar Salida</h4>
+                        <div class="input-group">
+                            <label for="salida-placa">Placa:</label>
+                            <input type="text" id="salida-placa" placeholder="ABC-123">
+                        </div>
+                        <button id="registrar-salida-btn">Registrar Salida</button>
+                        <p id="salida-info" class="message"></p>
+                        <button id="generar-comprobante-btn" class="hidden">Generar Comprobante</button>
                     </div>
-                    <button id="registrar-salida-btn">Registrar Salida</button>
-                    <p id="salida-info" class="message"></p>
-                    <button id="generar-comprobante-btn" class="hidden">Generar Comprobante</button>
                 </div>
 
                 <hr>
@@ -108,7 +136,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        </tbody>
+                    </tbody>
                 </table>
 
                 <hr>
@@ -140,7 +168,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
 
@@ -220,53 +248,57 @@
                         </tr>
                         </thead>
                     <tbody>
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
 
             <div class="tab-content hidden" id="mi-perfil-admin">
                 <h3>Mi Perfil (Admin)</h3>
-                <div class="form-section">
-                    <h4>Configuración de Tarifas</h4>
-                    <div class="input-group">
-                        <label for="tarifa-moto-segundo">Moto (por segundo):</label>
-                        <input type="number" id="tarifa-moto-segundo" step="0.01" value="0.01">
+                
+                <div class="layout-columnas">
+                    <div class="form-section">
+                        <h4>Configuración de Tarifas</h4>
+                        <div class="input-group">
+                            <label for="tarifa-moto-segundo">Moto (por segundo):</label>
+                            <input type="number" id="tarifa-moto-segundo" step="0.01" value="0.01">
+                        </div>
+                        <div class="input-group">
+                            <label for="tarifa-auto-segundo">Automóvil/Camioneta (por segundo):</label>
+                            <input type="number" id="tarifa-auto-segundo" step="0.01" value="0.02">
+                        </div>
+                        <div class="input-group">
+                            <label for="tarifa-camion-segundo">Camión (por segundo):</label>
+                            <input type="number" id="tarifa-camion-segundo" step="0.01" value="0.03">
+                        </div>
+                        <div class="input-group">
+                            <label for="tarifa-plana-horas">Tarifa Plana (horas para aplicar):</label>
+                            <input type="number" id="tarifa-plana-horas" value="12">
+                        </div>
+                        <div class="input-group">
+                            <label for="tarifa-plana-valor">Tarifa Plana (valor):</label>
+                            <input type="number" id="tarifa-plana-valor" step="0.01" value="20000">
+                        </div>
+                        <button id="guardar-tarifas-btn">Guardar Tarifas</button>
+                        <p id="tarifas-message" class="message"></p>
                     </div>
-                    <div class="input-group">
-                        <label for="tarifa-auto-segundo">Automóvil/Camioneta (por segundo):</label>
-                        <input type="number" id="tarifa-auto-segundo" step="0.01" value="0.02">
-                    </div>
-                    <div class="input-group">
-                        <label for="tarifa-camion-segundo">Camión (por segundo):</label>
-                        <input type="number" id="tarifa-camion-segundo" step="0.01" value="0.03">
-                    </div>
-                    <div class="input-group">
-                        <label for="tarifa-plana-horas">Tarifa Plana (horas para aplicar):</label>
-                        <input type="number" id="tarifa-plana-horas" value="12">
-                    </div>
-                    <div class="input-group">
-                        <label for="tarifa-plana-valor">Tarifa Plana (valor):</label>
-                        <input type="number" id="tarifa-plana-valor" step="0.01" value="20000">
-                    </div>
-                    <button id="guardar-tarifas-btn">Guardar Tarifas</button>
-                    <p id="tarifas-message" class="message"></p>
-                </div>
 
-                <hr>
-
-                <h4>Gestión de Clientes</h4>
-                <div class="input-group">
-                    <label for="buscar-cliente-placa">Buscar Cliente por Placa:</label>
-                    <input type="text" id="buscar-cliente-placa" placeholder="Placa del cliente">
+                    <div class="form-section">
+                        <h4>Gestión de Clientes</h4>
+                        <div class="input-group">
+                            <label for="buscar-cliente-placa">Buscar Cliente por Placa:</label>
+                            <input type="text" id="buscar-cliente-placa" placeholder="Placa del cliente">
+                        </div>
+                        <button id="buscar-cliente-btn">Buscar</button>
+                        <div id="cliente-info" class="card hidden">
+                            <br>
+                            <h5>Información del Cliente:</h5>
+                            <p><strong>Placa:</strong> <span id="cliente-info-placa"></span></p>
+                            <p><strong>Contraseña:</strong> <span id="cliente-info-pass"></span></p>
+                            <button id="reset-pass-btn">Restablecer Contraseña (misma placa)</button>
+                        </div>
+                        <p id="cliente-gestion-message" class="message"></p>
+                    </div>
                 </div>
-                <button id="buscar-cliente-btn">Buscar</button>
-                <div id="cliente-info" class="card hidden">
-                    <h5>Información del Cliente:</h5>
-                    <p><strong>Placa:</strong> <span id="cliente-info-placa"></span></p>
-                    <p><strong>Contraseña:</strong> <span id="cliente-info-pass"></span></p>
-                    <button id="reset-pass-btn">Restablecer Contraseña (misma placa)</button>
-                </div>
-                <p id="cliente-gestion-message" class="message"></p>
             </div>
         </section>
 
@@ -294,7 +326,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        </tbody>
+                    </tbody>
                 </table>
                 <p id="client-mensualidades-message" class="message"></p>
             </div>
